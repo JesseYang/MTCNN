@@ -1,0 +1,6 @@
+*.swp
+12
+*__pycache__
+dataset
+train_log
+train_file
