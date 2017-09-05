@@ -19,19 +19,17 @@ def get_img_list(text_file):
     ret = [record.strip().split(' ') for record in content]
     filter_ret = []
     for idx, ele in enumerate(ret):
-    	if int(ele[1]) == -1:
-    		im_path = os.path.join(cfg.net_dir_par, ele[0])
-    		flage = -1
-    		label = np.asarray([float(e) for e in ele[2:]])
-    	elif int(ele[1]) == 1:
-    		im_path = os.path.join(cfg.net_dir_pos, ele[0])
-    		flage = 1
-    		label = np.asarray([float(e) for e in ele[2:]])
-    	elif int(ele[1])  == 0:
-    		im_path = os.path.join(cfg.net_dir_neg, ele[0])
-    		flage = 0
-    		label = np.asarray([float(0) for e in range(0,4)])
-    	filter_ret.append([im_path, flage, label])
+        im_path = ele[0]
+        if int(ele[1]) == -1:
+            flage = -1
+            label = np.asarray([float(e) for e in ele[2:]])
+        elif int(ele[1]) == 1:
+            flage = 1
+            label = np.asarray([float(e) for e in ele[2:]])
+        elif int(ele[1])  == 0:
+            flage = 0
+            label = np.asarray([float(0) for e in range(0,4)])
+        filter_ret.append([im_path, flage, label])
     return filter_ret
 
 class Data(RNGDataFlow):
@@ -57,10 +55,9 @@ class Data(RNGDataFlow):
             self.rng.shuffle(idxs)
         for k in idxs:
             img_path, flage, label = self.imglist[k]
-            # print(flage)
-
+        
             img = misc.imread(img_path, mode='RGB')        
-            # img = cv2.imread(img_path)
+            img = cv2.resize(img,(12,12))
             yield [img, flage, label]
 
 if __name__ == '__main__':

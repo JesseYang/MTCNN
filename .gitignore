@@ -1,6 +1,10 @@
 *.swp
 12
+*.jpg
+*tem.py
 *__pycache__
 dataset
 train_log
 train_file
+dataflow*
+*data.ipynb

@@ -7,6 +7,7 @@ import uuid
 file_path = 'dataset/val_images'
 ##generate train.txt
 # train_file = 'dataset/annotations/wider_face_train_bbx_gt.txt'
+
 ####generate test.txt
 train_file = 'dataset/annotations/wider_face_val_bbx_gt.txt'
 
@@ -39,10 +40,14 @@ while k < size:
         ymin = int(items[k+1+i].strip().split(' ')[1])
         xmax = int(items[k+1+i].strip().split(' ')[2]) + xmin
         ymax = int(items[k+1+i].strip().split(' ')[3]) + ymin
-        # result = cv2.rectangle(img,(int(xmin), int(ymin)),
-        #                                        (int(xmax), int(ymax)),
-        #                                        (255,0,0),
-        #                                       3)
+        result = cv2.rectangle(img,(int(xmin), int(ymin)),
+                                               (int(xmax), int(ymax)),
+                                               (255,0,0),
+                                              3)
+       
+        if k in [12094, 12152]:
+            cv2.imwrite(str(uuid.uuid4()) +'.jpg',result)
+    
         i +=1
         coors.append([xmin, ymin, xmax, ymax])
     coors = [str(ele[0]) + " " + str(ele[1]) + " " +str(ele[2]) + " " + str(ele[3]) for ele in coors]
@@ -51,8 +56,7 @@ while k < size:
     
     re = line + " " + coors + "\n"
     record.append(re)
-    # cv2.imwrite(os.path.join('/home/yjf/Downloads/mtcnn/result', str(uuid.uuid4()) +'.jpg'),result)
-    
+
     k = img_num +2 +k
     count += 1
 #     if count %10 == 0:
