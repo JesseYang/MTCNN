@@ -18,7 +18,7 @@ from train import Model
 from reader import *
 from cfgs.config import cfg
 
-def process_resutl(pre_bbox, input_image=None):
+def process_resutl(pre_bbox, input_image):
     im = misc.imread(input_image, mode='RGB')
     ori_h, ori_w, _ = im.shape
     
@@ -27,8 +27,8 @@ def process_resutl(pre_bbox, input_image=None):
     x2 = pre_bbox[2] * ori_w + ori_w
     y2 = pre_bbox[3] * ori_h + ori_h
 
-    xmin = np.max([x1, ori_w])
-    ymin = np.max([y1, ori_h])
+    xmin = np.max([x1, 0])
+    ymin = np.max([y1, 0])
     xmax = np.min([y2, ori_w])
     ymax = np.min([y2, ori_h])
     return [int(xmin), int(ymin), int(xmax), int(ymax)]
@@ -38,7 +38,7 @@ def get_pred_func(args):
     predcit_config = PredictConfig(session_init = sess_init,
                                     model = model,
                                     input_names = ["input", "label"],
-                                    output_names = ["labels", "bboxs"])
+                                    output_names = ["LABELS", "BBOXS"])
     predict_func = OfflinePredictor(predcit_config)
     return predict_func
 
@@ -57,8 +57,8 @@ def predict_image(input_image, predict_func):
   
     label = np.array([1,1], dtype=np.int32)
     # label = tf.reshape(label, (1,1))
-
     predcit_result = predict_func([image,label])
+    print(predcit_result)
     pre_label = predcit_result[0]
     pre_bbox = predcit_result[1][0]
     print(pre_label[0]) #[[ 0.5  0.5]]
@@ -70,6 +70,7 @@ def predict_image(input_image, predict_func):
     bbox = process_resutl(pre_bbox, input_image)
     print(bbox)
     cv2.rectangle(img,(bbox[0], bbox[1]), (bbox[2], bbox[3]), (255,255,0), 4)
+    
     cv2.imwrite("out.jpg",img)
     # result  = np.argmax(predict_img, 1)
     # print(result)

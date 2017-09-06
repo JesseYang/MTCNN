@@ -55,9 +55,11 @@ class Data(RNGDataFlow):
             self.rng.shuffle(idxs)
         for k in idxs:
             img_path, flage, label = self.imglist[k]
-        
+            if not os.path.isfile(img_path):
+                continue
             img = misc.imread(img_path, mode='RGB')        
-            img = cv2.resize(img,(12,12))
+            # img = cv2.resize(img,(12,12))
+            # print(label)
             yield [img, flage, label]
 
 if __name__ == '__main__':

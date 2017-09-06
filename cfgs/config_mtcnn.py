@@ -43,6 +43,6 @@ cfg.channels_48 = [32, 64, 64, 128]
 cfg.kernel_size_48 = [3, 3, 3, 2]
 
 
-cfg.weight_decay = 5e-4
-
+# cfg.weight_decay = 5e-4
+cfg.weight_decay = 0
 
