@@ -58,8 +58,7 @@ class Data(RNGDataFlow):
             if not os.path.isfile(img_path):
                 continue
             img = misc.imread(img_path, mode='RGB')        
-            # img = cv2.resize(img,(12,12))
-            # print(label)
+            img = cv2.resize(img, (cfg.img_size_12, cfg.img_size_12))
             yield [img, flage, label]
 
 if __name__ == '__main__':

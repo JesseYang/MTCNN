@@ -6,16 +6,16 @@ from utils import IoU
 import cv2
 
 
-mtcnn_train_txt = 'train_file/mtcnn_train12.txt'
-images_path = 'dataset/images'
+mtcnn_train_txt = 'train_file/mtcnn_val12.txt'
+images_path = 'dataset/val_images'
 
-neg_dir = '12/neg'
-pos_dir = '12/pos'
-par_dir = '12/par'
+neg_dir = '12/negval'
+pos_dir = '12/posval'
+par_dir = '12/parval'
 txt_path = 'train_file'
-neg_txt = open(os.path.join(txt_path ,'neg_12.txt'),'w')
-pos_txt = open(os.path.join(txt_path ,'pos_12.txt'),'w')
-par_txt = open(os.path.join(txt_path ,'par_12.txt'),'w')
+neg_txt = open(os.path.join(txt_path ,'negval_12.txt'),'w')
+pos_txt = open(os.path.join(txt_path ,'posval_12.txt'),'w')
+par_txt = open(os.path.join(txt_path ,'parval_12.txt'),'w')
 
 with open(mtcnn_train_txt,'r') as f:
     labels = f.readlines()
@@ -48,10 +48,10 @@ for label in labels:
 
         corpped_img = img[y_c : y_c + size, x_c : x_c + size, : ]
         # cv2.imwrite('./1.jpg',corpped_img)
-        resized_crop_img = cv2.resize(corpped_img,(12,12), interpolation=cv2.INTER_LINEAR)
+        # resized_crop_img = cv2.resize(corpped_img,(12,12), interpolation=cv2.INTER_LINEAR)
         if np.max(Iou) < 0.3:
             neg_txt.write(os.path.join(neg_dir,str(n_idx) + ".jpg 0") + '\n')
-            cv2.imwrite(os.path.join(neg_dir,str(n_idx) + ".jpg"),resized_crop_img)
+            cv2.imwrite(os.path.join(neg_dir,str(n_idx) + ".jpg"),corpped_img)
             n_idx += 1
             neg_num += 1
     for box in bbox:
@@ -91,16 +91,16 @@ for label in labels:
             offset_y2 = (y2 - ny2) / size
             corpped_img = img[int(ny1) : int(ny2), int(nx1) : int(nx2), :]
     
-            resized_crop_img = cv2.resize(corpped_img, (12, 12),interpolation=cv2.INTER_LINEAR)
+            # resized_crop_img = cv2.resize(corpped_img, (12, 12),interpolation=cv2.INTER_LINEAR)
             box_ = box.reshape(1,-1)
 
             if IoU(crop_box, box_) >= 0.65:
                 pos_txt.write(os.path.join(pos_dir, str(p_idx) + '.jpg') + ' 1 %0.3f %0.3f %0.3f %0.3f\n'%(offset_x1, offset_y1, offset_x2, offset_y2))
-                cv2.imwrite(os.path.join(pos_dir, str(p_idx) + '.jpg'), resized_crop_img)
+                cv2.imwrite(os.path.join(pos_dir, str(p_idx) + '.jpg'), corpped_img)
                 p_idx += 1
             elif IoU(crop_box, box_) >= 0.4:
                 par_txt.write(os.path.join(par_dir, str(d_idx) + ".jpg") + ' -1 %0.3f %0.3f %0.3f %0.3f\n'%(offset_x1, offset_y1, offset_x2, offset_y2))
-                cv2.imwrite(os.path.join(par_dir, str(d_idx) + ".jpg"), resized_crop_img)
+                cv2.imwrite(os.path.join(par_dir, str(d_idx) + ".jpg"), corpped_img)
                 d_idx += 1
     print("images done, positive: %s negative: %s part: %s"%(p_idx,n_idx,d_idx))
 neg_txt.close()

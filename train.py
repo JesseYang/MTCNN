@@ -55,28 +55,30 @@ class Model(ModelDesc):
             p_net_result = self._p_net_conv(image, cfg.channels_12, cfg.kernel_size_12)
             conv = Conv2D('conv_class', p_net_result, 2, (1, 1), 'VALID')
 
-            # prob = tf.nn.softmax(conv)
-            # prob = tf.identity(prob, name="LABELS")
-            # conv = tf.reshape(conv, (-1,1*1*2))
+            prob_cls = tf.nn.softmax(conv)
+            prob_cls = tf.identity(prob_cls, name="LABELS")
+            
 
             result_label = tf.boolean_mask(tensor=conv, mask=classification_indicator)
             result_label = tf.reshape(result_label, (-1, 1 * 1 * 2), name="labels")
             classification_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=result_label, labels=classification_label)
             classification_loss = tf.reduce_sum(classification_loss, name="classification_loss")
 
-            # wrong = prediction_incorrect(result_label,classification_label)
-            # add_moving_summary(tf.reduce_mean(wrong, name='classification_train_error'))
-           
+            wrong = symbolic_functions.prediction_incorrect(result_label, classification_label, name='incorrect')
+            train_error = tf.reduce_mean(wrong, name='train_error')
+            summary.add_moving_summary(train_error)
+
+
 
             # regression
             regression_indicator = tf.not_equal(label, 0)
             regression_label = tf.boolean_mask(tensor = bbox, mask = regression_indicator)
     
             conv = Conv2D('conv_regress',p_net_result, 4, (1, 1), 'VALID')
+            prob_reg = tf.identity(conv, name="BBOXS")
 
             result_bbox = tf.boolean_mask(tensor=conv, mask=regression_indicator)
             result_bbox = tf.reshape(result_bbox, (-1, 1 * 1 * 4))
-            
      
             regression_loss = tf.square(tf.subtract(result_bbox, regression_label)) * 0.5
             regression_loss = tf.reduce_sum(regression_loss, name='regression_loss')
@@ -106,9 +108,6 @@ class Model(ModelDesc):
             loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=classification_image, labels=classification_label)
             loss = tf.reduce_mean(loss, name='crocss_entropy_loss')
 
-
-
-
         if cfg.weight_decay > 0:
             wd_cost = regularize_cost('.*/W', l2_regularizer(cfg.weight_decay), name='l2_regularize_loss')
             # add_moving_summary(loss, wd_cost)
@@ -125,8 +124,6 @@ class Model(ModelDesc):
     def _p_net_conv(self, img, channels, kernel_size):
         with tf.variable_scope("face_classification") as scope:
             for layer_idx, conv in enumerate(channels):
-                # layer_input = tf.identity(img)
-                # pdb.set_trace()
                 img = Conv2D('conv.{}'.format(layer_idx),
                     img,
                     channels[layer_idx],
@@ -134,7 +131,7 @@ class Model(ModelDesc):
                     'VALID')
                 img = tf.nn.relu(img)
                 if layer_idx == 0:
-                    img = tf.nn.max_pool(img,[1, kernel_size[layer_idx], kernel_size[layer_idx], 1],[1, 2, 2, 1], 'SAME')
+                    img = tf.nn.max_pool(img,[1, kernel_size[layer_idx], kernel_size[layer_idx], 1], [1, 2, 2, 1], 'SAME')
         return img
 
     def _r_net_conv(self, img, channels, kernel_size):
@@ -149,14 +146,10 @@ class Model(ModelDesc):
                 img = tf.nn.relu(img)
                 if layer_idx != 2:
                     img = tf.nn.max_pool(img,[1, 3, 3, 1],[1, 2, 2, 1], 'SAME')
-        # pdb.set_trace()
+        
         img = tf.reshape(img, [-1, 3*3*64])
         w = tf.truncated_normal([3*3*64, 128], stddev = 0.1)
         b = tf.constant(0.1, shape = [128], stddev = 0.1)
-        print("h")
-        # img = tf.nn.relu()
-        # return Conv2D('conv.{}'.format(layer_idx + 1),img,out_channel,(out_kernel_size,out_kernel_size),'VALID')
-
 def get_data(train_or_test):
     isTrain = train_or_test == 'train'
 
@@ -199,16 +192,20 @@ def get_config(args):
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
-            # InferenceRunner(dataset_val, [ScalarStats('cost')]),
+            # MinSaver('cost')
+            InferenceRunner(dataset_val, [
+                ScalarStats('regression_loss'),
+                ScalarStats('classification_loss'),
+                ClassificationError('incorrect')]),
             ScheduledHyperParamSetter('learning_rate',
                                       #orginal learning_rate
                                       #[(0, 1e-2), (30, 3e-3), (60, 1e-3), (85, 1e-4), (95, 1e-5)]),
                                       #new learning_rate
-                                      [(0, 1e-3)]),
+                                      [(0, 1e-4)]),
             HumanHyperParamSetter('learning_rate'),
         ],
         model=Model(args.net_format),
-        max_epoch=5000,
+        max_epoch=100000,
     )
 
 

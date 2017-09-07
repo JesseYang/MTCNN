@@ -18,12 +18,17 @@ from train import Model
 from reader import *
 from cfgs.config import cfg
 
-def process_resutl(pre_bbox, input_image):
-    im = misc.imread(input_image, mode='RGB')
+def process_resutl(pre_bbox, input_image, im=None):
+    if input_image != None:
+        im = misc.imread(input_image, mode='RGB')
     ori_h, ori_w, _ = im.shape
-    
-    x1 = pre_bbox[0] * ori_w + ori_w
-    y1 = pre_bbox[1] * ori_h + ori_h
+
+    # w_rate = ori_w / float(cfg.img_size_12)
+    # h_rate = ori_w / float(cfg.img_size_12)
+    pre_bbox = [float(e) for e in pre_bbox]
+
+    x1 = pre_bbox[0] * ori_w
+    y1 = pre_bbox[1] * ori_h
     x2 = pre_bbox[2] * ori_w + ori_w
     y2 = pre_bbox[3] * ori_h + ori_h
 
@@ -31,6 +36,7 @@ def process_resutl(pre_bbox, input_image):
     ymin = np.max([y1, 0])
     xmax = np.min([y2, ori_w])
     ymax = np.min([y2, ori_h])
+
     return [int(xmin), int(ymin), int(xmax), int(ymax)]
 def get_pred_func(args):
     sess_init = SaverRestore(args.model_path)
@@ -42,41 +48,45 @@ def get_pred_func(args):
     predict_func = OfflinePredictor(predcit_config)
     return predict_func
 
-def predict_image(input_image, predict_func):
-    # img = cv2.imread(input_image)
-    # cvt_img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-    img = misc.imread(input_image, mode='RGB')
-    image = cv2.resize(img,(cfg.img_size_12, cfg.img_size_12))
-    image = np.expand_dims(image, axis=0)
+def predict_on_testimage(file_path, predict_func):
+    if not os.path.exists(file_path):
+        print("file does not exists")
+        return
+    with open(file_path, 'r')  as f:
+        content = f.readlines()
 
-    # image = tf.cast(image, tf.float32) * (1.0 / 255)
-    # image_mean = tf.constant([0.485, 0.456, 0.406], dtype=tf.float32)
-    # image_std = tf.constant([0.229, 0.224, 0.225], dtype=tf.float32)
-    # image = (image - image_mean) / image_std
-    # pdb.set_trace()
+    count = 0
+    for item in content:
+        image = item.split(' ')
+        coor = image[2:] if int(image[1]) != 0 else None
+        predict_image(image[0], predict_func, coor)
+        count += 1
+        if count == 300: #after 500 images tested break
+            break
+
+def predict_image(input_image, predict_func, coor=None):
+    img = misc.imread(input_image, mode='RGB')
+    image = cv2.resize(img, (cfg.img_size_12, cfg.img_size_12))
+    image = np.expand_dims(image, axis=0)
   
     label = np.array([1,1], dtype=np.int32)
-    # label = tf.reshape(label, (1,1))
-    predcit_result = predict_func([image,label])
-    print(predcit_result)
-    pre_label = predcit_result[0]
-    pre_bbox = predcit_result[1][0]
-    print(pre_label[0]) #[[ 0.5  0.5]]
-    print(pre_bbox) #[[  3.60741063e-25  -7.15634251e-25   1.89428121e-25  -5.23704886e-25]]
-
-    # result = np.argmax(pre_label)
-
-
-    bbox = process_resutl(pre_bbox, input_image)
+    predcit_result = predict_func([image, label])
+    # print(predcit_result)
+    pre_label = predcit_result[0][0][0][0]
+    pre_bbox = predcit_result[1][0][0][0]
+    # print(pre_label)
+    print(pre_bbox)
+    bbox = process_resutl(pre_bbox, None, img)
     print(bbox)
-    cv2.rectangle(img,(bbox[0], bbox[1]), (bbox[2], bbox[3]), (255,255,0), 4)
-    
-    cv2.imwrite("out.jpg",img)
-    # result  = np.argmax(predict_img, 1)
-    # print(result)
-    # non_maximum_suppression(predict_img,0.6)
+    if coor != None:
+        ori_coor = process_resutl(coor, None, img)
+        cv2.rectangle(img, (ori_coor[0], ori_coor[1]), (ori_coor[2], ori_coor[3]), (0, 0, 255), 1)
+        
+        cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 1)
+        cv2.putText(img, str(np.max(pre_label)), (ori_coor[0], ori_coor[1] + 6),
+                    cv2.FONT_HERSHEY_SIMPLEX,0.5,(0, 122, 122))
+    cv2.imwrite(os.path.join('output' ,str(uuid.uuid4()) + ".jpg"), img)
     print("predict over")
-
 
 def predict_images(input_path, predict_func):
     print("predict all images....")
@@ -88,6 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', help='path of model')
     parser.add_argument('--input_image', help='path of single image')
     parser.add_argument('--input_path', help='path of images')
+    parser.add_argument('--file_path', help='txt file of image include label')
     parser.add_argument('--net_format', choices=['P-Net', 'R-Net', 'Q-Net'], default='P-Net')
     args = parser.parse_args()
 
@@ -101,4 +112,9 @@ if __name__ == '__main__':
             shutil.rmtree("output")
         os.mkdir("output")
         predict_images(args.input_path, predict_func)
+    elif args.file_path != None:
+        if os.path.isdir('output'):
+            shutil.rmtree('output')
+        os.mkdir('output')
+        predict_on_testimage(args.file_path, predict_func)
 
