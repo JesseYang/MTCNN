@@ -1,1 +1,1 @@
-from .config_mtcnn import cfg
+from .config_mtcnn48 import cfg

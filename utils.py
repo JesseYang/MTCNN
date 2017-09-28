@@ -14,7 +14,9 @@ def IoU(box, boxes):
     -------
     ovr: numpy.array, shape (n, )
         IoU
-    """
+    # """
+    # import pdb
+    # pdb.set_trace()
     box_area = (box[2] - box[0] + 1) * (box[3] - box[1] + 1)
     area = (boxes[:, 2] - boxes[:, 0] + 1) * (boxes[:, 3] - boxes[:, 1] + 1)
     xx1 = np.maximum(box[0], boxes[:, 0])
