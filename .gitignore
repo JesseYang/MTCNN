@@ -1,5 +1,8 @@
+test_data.ip*
+*demo.py
 *.swp
 12
+*.mp4
 *.txt
 24
 48*
@@ -14,8 +17,9 @@ train_log
 train_file
 dataflow*
 *data.ipynb
-output
+*output
+*.pgm
 ori_test
-*_ori.py
+*ori.py
 *txt.py
 

@@ -48,7 +48,7 @@ class Model(ModelDesc):
             .Conv2D('conv4', 128, kernel_shape=2)
             .PReLU(name="relu4")
             .FullyConnected('fc0', out_dim=256, nl=tf.identity)
-            .Dropout('dropout', 0.25)
+            # .Dropout('dropout', 0.25)
             .PReLU(name="relu5")())
 
             classification_conv = (LinearWrap(r_net_conv)
@@ -92,7 +92,8 @@ class Model(ModelDesc):
         prob_landmark = tf.identity(landmark_conv, name="LANDMARK")
 
         landmark_max_indicator = tf.reduce_max(landmark, 1)
-        landmark_indicator = tf.greater(landmark_max_indicator, 0)
+        # landmark_indicator = tf.greater(landmark_max_indicator, 0)
+        landmark_indicator = tf.not_equal(landmark_max_indicator, 0)
 
         landmark_result = tf.boolean_mask(tensor=landmark_conv, mask=landmark_indicator)
         lanmdark_label = tf.boolean_mask(tensor=landmark, mask=landmark_indicator)
@@ -109,6 +110,7 @@ class Model(ModelDesc):
             add_moving_summary(loss, wd_cost)
 
             add_moving_summary(classification_loss, regression_loss, landmark_loss)
+            # add_moving_summary(classification_loss, regression_loss)
             self.cost = tf.add_n([loss, wd_cost], name='cost')
         else:
             add_moving_summary(classification_loss, regression_loss, landmark_loss)
@@ -174,7 +176,7 @@ def get_config(args):
                                       # orginal learning_rate
                                       # [(0, 1e-2), (30, 3e-3), (60, 1e-3), (85, 1e-4), (95, 1e-5)],
                                       # new learning_rate
-                                     [(0, 1e-5)]),
+                                     [(0, 1e-4)]),
             HumanHyperParamSetter('learning_rate'),
         ],
         model=Model(),

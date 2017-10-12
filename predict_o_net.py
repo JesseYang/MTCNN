@@ -302,7 +302,8 @@ def predict_image_multi_scale(input_image, p_predict_func, r_predict_func, o_pre
     m = 12 / math.floor(minsize * 0.1)
     minsize = minsize * m
     factor_count = 0
-    factor = 0.709 #scale factor
+    # factor = 0.709 #scale factor
+    factor = 0.3 #scale factor
     scales = []
     while (minsize >= 12):
         scales.append(m * np.power(factor, factor_count))
@@ -387,7 +388,7 @@ def predict_image_multi_scale(input_image, p_predict_func, r_predict_func, o_pre
 
     numbox = total_boxes.shape[0]
     input_box = total_boxes.copy()
-    # print(input_box.shape[0])
+    # # print(input_box.shape[0])
     # print(numbox)
     # for i in range(numbox):
     #     boxes = total_boxes[i,0:-1]
@@ -443,13 +444,13 @@ def predict_image_multi_scale(input_image, p_predict_func, r_predict_func, o_pre
     face_num = total_boxes.shape[0]
     print(face_num)
     for i in range(face_num):
-        if total_boxes[i,4] < 0.9:
+        if total_boxes[i,4] < 0.8:
             continue
         img = cv2.rectangle(img,
                            (int(total_boxes[i,0]), int(total_boxes[i,1])),
                            (int(total_boxes[i,2]), int(total_boxes[i,3])),
                            (255, 0, 0),
-                           3)
+                           2)
         # point = points[i,:]
         # pdb.set_trace()
         # point = np.reshape(point, (-1 , 2)) 
@@ -458,7 +459,7 @@ def predict_image_multi_scale(input_image, p_predict_func, r_predict_func, o_pre
         result = process_landmark_result(points[i,:], input_box[i,:])
         result = np.array(result, dtype = np.float32).reshape(-1, 2)
         for co in result:
-            cv2.circle(img,(co[0], co[1]), 1, (0,0,255), 2) 
+            cv2.circle(img,(co[0], co[1]), 1, (0,255,255), 1) 
     # return img
     misc.imsave('output.jpg', img)
     print("step over " + str(start_time - time.time()))
@@ -487,7 +488,7 @@ def predict_image(input_image, predict_func, coor=None, flag = True):
     if coor != None:
         ori_coor = process_result(coor, None, img)
         ori_coor = [int(e) for e in ori_coor]
-        cv2.rectangle(img, (ori_coor[0], ori_coor[1]), (ori_coor[2], ori_coor[3]), (0, 0, 255), 2) 
+        cv2.rectangle(img, (ori_coor[0], ori_coor[1]), (ori_coor[2], ori_coor[3]), (0, 255, 255), ) 
     # cv2.putText(img, str(np.max(pre_label)), (bbox[0], bbox[1] + 6),
     #                 cv2.FONT_HERSHEY_SIMPLEX,0.5,(0, 122, 122))
     if pre_label > 0.4:
@@ -513,7 +514,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pmodel_path', default="train_log/train_p_net0920-163732/model-3621124", help='path of pmodel')
     parser.add_argument('--rmodel_path', default="train_log/train_r_net0919-181029/model-3323040", help='path of rmodel')
-    parser.add_argument('--omodel_path', default="train_log/train_o_net/model-1804787", help='path of omodel')
+    parser.add_argument('--omodel_path', default="train_log/train_o_net0929-173511/model-496800", help='path of omodel')
     # parser.add_argument('--omodel_path', default="train_log/train_o_net0922-192732/model-510117", help='path of omodel')
 
 

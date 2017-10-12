@@ -12,8 +12,8 @@ cfg.img_size_48 = 48
 # cfg.net_dir_par = '12/par'
 # cfg.net_dir_pos = '12/pos'
 
-cfg.train_list = [cfg.name + "_train.txt"]
-cfg.test_list = cfg.name + "_val.txt"
+cfg.train_list = [cfg.name + "_new_train.txt"]
+cfg.test_list = cfg.name + "_new_val.txt"
 # cfg.train_list = [cfg.name + "_test_train.txt"]
 # cfg.test_list = cfg.name + "_test_val.txt"
 

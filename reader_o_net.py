@@ -19,8 +19,10 @@ def get_img_list(text_file):
     ret = [record.strip().split(' ') for record in content]
     # pdb.set_trace()  
     filter_ret = []
+
     for idx, ele in enumerate(ret):
         im_path = ele[0]
+        # print(im_path)
         if int(ele[1]) == -1:
             flage = -1
             if len(ele[2:]) < 7:
