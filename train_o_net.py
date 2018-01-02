@@ -59,9 +59,12 @@ class Model(ModelDesc):
 
             landmark_conv = (LinearWrap(r_net_conv)
                 .FullyConnected('fc3', out_dim=10, nl=tf.identity)())
-
+       
         # classification
         classification_indicator = tf.not_equal(label, -1)
+        # classification_indicator2 = tf.reduce_max(landmark, 1)
+        # classification_indicator2 = tf.not_equal(classification_indicator2, 0)
+        # classification_indicator = classification_indicator2 & classification_indicator1
         classification_label = tf.boolean_mask(tensor = label, mask = classification_indicator)
 
         prob_cls = tf.nn.softmax(classification_conv)
@@ -169,14 +172,14 @@ def get_config(args):
                 ScalarStats('classification_loss'),
                 ScalarStats('landmark_loss'),
                 ClassificationError('incorrect')]),
-            	every_k_epochs=3),
+            	every_k_epochs=5),
                 # HyperParamSetterWithFunc('learning_rate',
                 #                      lambda e, x: 1e-4 * (4.0 / 5) ** (e * 11.0 / 32) ),
            ScheduledHyperParamSetter('learning_rate',
                                       # orginal learning_rate
                                       # [(0, 1e-2), (30, 3e-3), (60, 1e-3), (85, 1e-4), (95, 1e-5)],
                                       # new learning_rate
-                                     [(0, 1e-4)]),
+                                     [(0, 1e-5)]),
             HumanHyperParamSetter('learning_rate'),
         ],
         model=Model(),
@@ -188,7 +191,7 @@ def get_config(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.', default='0')
+    parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.', default='1')
     parser.add_argument('--batch_size', default=64)
     parser.add_argument('--load', help='load model')
     args = parser.parse_args()
